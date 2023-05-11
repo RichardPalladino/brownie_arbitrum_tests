@@ -9,7 +9,7 @@
 
 
 ### Other notes
-* Forking can also be done at specific block #'s with the following command lines as examples (the "@123456" is the blcok number)
+* Forking can also be done at specific block #'s with the following command lines as examples (the "@123456" is the block number)
     ```
     brownie networks add development chain-name-fork cmd=ganache-cli host=http://127.0.0.1 fork=RPC_URL@123456 accounts=10 mnemonic=brownie port=8545
     ```

@@ -2,7 +2,7 @@ development:
   - name: Ganache CLI (Arbitrum-Mainnet Fork)
     id: arbitrum-main-fork
     cmd: ganache-cli
-    host: 127.0.0.1
+    host: http://127.0.0.1
     timeout: 120
     cmd_settings:
       port: 8545
