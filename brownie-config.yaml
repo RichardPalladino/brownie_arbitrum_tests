@@ -3,6 +3,8 @@ dotenv: .env
 networks:
   default: arbitrum-main-fork
   arbitrum-main-fork:
+    weth_token: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
     verify: False
   arbitrum-main:
+    weth_token: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
     verify: False

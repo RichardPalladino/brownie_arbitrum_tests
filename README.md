@@ -18,9 +18,10 @@
     npx hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/<key> --fork-block-number 11095000
     ```
     if Hardhat is installed (as it is for me).
-* As I have written it, this will require your Infura key.
+* As I have written it, this will require your Infura key in the .env file, per Brownie's standards.
 * Potentially you can update the fork to be at a specific block, using an Arbitrum node provider's URL with the following code:
     ```
     brownie networks modify arbitrum-main-fork fork=RPC_URL@123456
     ```
     but I have not yet tested...
+* I could write tests but this isn't a full project. Really it's just for me to play around with forking and flash loans/swaps using Brownie and the Arbitrum network.
