@@ -1,4 +1,5 @@
-pragma solidity ^0.4.19;
+//SPDX-License-Identifier: Unlicense
+pragma solidity ^0.8.0;
 
 interface IwETH {
   function allowance(address owner, address spender) external view returns (uint256 remaining);

@@ -25,3 +25,16 @@
     ```
     but I have not yet tested...
 * I could write tests but this isn't a full project. Really it's just for me to play around with forking and flash loans/swaps using Brownie and the Arbitrum network.
+
+# Further notes
+
+weth: 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1
+usdc: 0xff970a61a04b1ca14834a43f5de4533ebddb5cc8
+dai: 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1
+usdt: 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9
+wbtc: 0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f
+
+* Chronos exchange and other AMMs similar to UniswapV2 have good liquidity: https://chronos.exchange/ , https://arbiscan.io/address/0xafE909b1A5ed90d36f9eE1490fCB855645C00EB3
+---- Add this factory 0xCe9240869391928253Ed9cc9Bcb8cb98CB5B0722 -- Chronos
+
+* Stargate factory may match UniswapV2, but their LP contract is non-standard -- remove from the group
