@@ -6,7 +6,7 @@ import '../interfaces/IwETH.sol';
 import '../interfaces/IUniswapV2Pair.sol';
 
 // Basic template contract I'll be working with
-contract TestFlashLoan{
+contract FlashTemplate{
     address private owner;
     address[3] private lps;
 
