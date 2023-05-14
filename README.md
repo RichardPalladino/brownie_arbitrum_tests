@@ -38,3 +38,8 @@ wbtc: 0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f
 ---- Add this factory 0xCe9240869391928253Ed9cc9Bcb8cb98CB5B0722 -- Chronos
 
 * Stargate factory may match UniswapV2, but their LP contract is non-standard -- remove from the group
+
+# Todo (now or later)
+1. Finish validating the "max fees" for each DEX
+2. Re-label "average_fee" to "max_fee"
+3. Eventually be able to handle each DEX's dynamic or varying fees individually

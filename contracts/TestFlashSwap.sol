@@ -6,13 +6,26 @@ import '../interfaces/IwETH.sol';
 import '../interfaces/IUniswapV2Pair.sol';
 
 // Basic template contract I'll be working with
-contract TestFlashLoan{
+contract TestFlashSwap{
+    // mostly constant
     address private owner;
     address private weth;
+    // swap variables
     address[] private lps = new address[](3);
+    uint256 private wethIn;
+    uint256 public aOut;
 
-    uint256 public maxTest;
-    bool public testToken0;
+    /* // from another contract
+    struct CallbackData {
+    address debtPool;
+    address targetPool;
+    bool debtTokenSmaller;
+    address borrowedToken;
+    address debtToken;
+    uint256 debtAmount;
+    uint256 debtTokenOutAmount;
+    }
+    */
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -49,40 +62,28 @@ contract TestFlashLoan{
         payable(owner).transfer(address(this).balance);
     }
 
-    function initiateWethFlashloan(
-        address _LP, 
-        bool _isToken0, 
-        uint256 _loanAmnt, 
-        uint256 _wethToRepay) external {
+    function swapWETH(address _LP, uint256 _wethIn, uint256 _feeMultiplier) external{
+        require(_LP != address(0), "0x LP");
+        require(_wethIn != 0, "0 in");
 
-            require(_loanAmnt != 0);
-            lps[0] = _LP;
-            IUniswapV2Pair lp = IUniswapV2Pair(_LP);
+        lps[0] = _LP;
+        wethIn = _wethIn;
 
-            // testToken0 = _isToken0;
-            // maxTest = IwETH(weth).balanceOf(address(this));
-
-
-
-            if(_isToken0 == true){
-                lp.swap(_loanAmnt, 0, address(this), abi.encode(_wethToRepay,_isToken0));
-            } else {
-                lp.swap(0, _loanAmnt, address(this), abi.encode(_wethToRepay,_isToken0));
-            }
-
+        IUniswapV2Pair lp = IUniswapV2Pair(_LP);
+        bool chkToken0 = weth == lp.token0() ? true : false;
+        (uint256 reserves0, uint256 reserves1, uint32 lastBlocktime) = lp.getReserves();
+        uint256 k = reserves0 * reserves1;
+    
+        if(chkToken0 == true){
+            aOut = ((reserves1 - (k / (reserves0 + _wethIn))) * _feeMultiplier) / 100000;
+            lp.swap(0, aOut, address(this), abi.encode(_feeMultiplier));
+        } else {
+            aOut = ((reserves0 - (k / (reserves1 + _wethIn))) * _feeMultiplier) / 100000;
+            lp.swap(aOut, 0, address(this), abi.encode(_feeMultiplier));
+        }
+    
     }
 
-    /* // from another contract
-    struct CallbackData {
-    address debtPool;
-    address targetPool;
-    bool debtTokenSmaller;
-    address borrowedToken;
-    address debtToken;
-    uint256 debtAmount;
-    uint256 debtTokenOutAmount;
-    }
-    */
 
     function _execute(
         address _sender,
@@ -90,73 +91,63 @@ contract TestFlashLoan{
         uint _amount1,
         bytes memory _data
     ) internal {
-        // obtain an amount of token that I pulled int
+
+        IwETH(weth).transfer(msg.sender, wethIn);
+
+        /* // Example from another arb contract
+        // obtain an amount of token that you exchanged, for example BUSD
         uint amountToken = _amount0 == 0 ? _amount1 : _amount0;
 
-        // (address sourceRouter, address targetRouter) = abi.decode(_data, (address, address));
-        (uint256 _repayAmnt, bool _token0) = abi.decode(_data, (uint256,bool));
-        require(_repayAmnt !=0);
-        testToken0 = _token0;
+        IUniswapV2Pair iUniswapV2Pair = IUniswapV2Pair(msg.sender);
+        address token0 = iUniswapV2Pair.token0();
+        address token1 = iUniswapV2Pair.token1();
 
-        IwETH wethContract = IwETH(weth);
-        maxTest = wethContract.balanceOf(address(this));
-        
-        wethContract.transfer(msg.sender, _repayAmnt);
+        require(token0 != address(0) && token1 != address(0), 'e11');
 
+        // if _amount0 is zero sell token1 for token0
+        // else sell token0 for token1 as a result
+        address[] memory path1 = new address[](2);
+        address[] memory path2 = new address[](2);
 
-        // IUniswapV2Pair iUniswapV2Pair = IUniswapV2Pair(msg.sender);
-        // address token0 = iUniswapV2Pair.token0();
-        // address token1 = iUniswapV2Pair.token1();
+        address forward = _amount0 == 0 ? token1 : token0;
+        address backward = _amount0 == 0 ? token0 : token1;
 
-        // require(token0 != address(0) && token1 != address(0), 'e11');
+        // path1 represents the forwarding exchange from source currency to swapped currency
+        // path1[0] = path2[1] = _amount0 == 0 ? token1 : token0;
+        path1[0] = path2[1] = forward;
+        // path2 represents the backward exchange from swapeed currency to source currency
+        // path1[1] = path2[0] = _amount0 == 0 ? token0 : token1;
+        path1[1] = path2[0] = backward;
 
-        // // if _amount0 is zero sell token1 for token0
-        // // else sell token0 for token1 as a result
-        // address[] memory path1 = new address[](2);
-        // address[] memory path2 = new address[](2);
+        (address sourceRouter, address targetRouter) = abi.decode(_data, (address, address));
+        require(sourceRouter != address(0) && targetRouter != address(0), 'e12');
 
-        // address forward = _amount0 == 0 ? token1 : token0;
-        // address backward = _amount0 == 0 ? token0 : token1;
+        IERC20 token = IERC20(forward);
+        token.approve(targetRouter, amountToken);
 
-        // // path1 represents the forwarding exchange from source currency to swapped currency
-        // // path1[0] = path2[1] = _amount0 == 0 ? token1 : token0;
-        // path1[0] = path2[1] = forward;
-        // // path2 represents the backward exchange from swapeed currency to source currency
-        // // path1[1] = path2[0] = _amount0 == 0 ? token0 : token1;
-        // path1[1] = path2[0] = backward;
+        // calculate the amount of token how much input token should be reimbursed, BNB -> BUSD
+        uint amountRequired = IUniswapV2Router(sourceRouter).getAmountsIn(amountToken, path2)[0];
 
-        // IERC20 token = IERC20(forward);
-        // token.approve(targetRouter, amountToken);
+        // swap token and obtain equivalent otherToken amountRequired as a result, BUSD -> BNB
+        uint amountReceived = IUniswapV2Router(targetRouter).swapExactTokensForTokens(
+            amountToken,
+            amountRequired, // we already now what we need at least for payback; get less is a fail; slippage can be done via - ((amountRequired * 19) / 981) + 1,
+            path1,
+            address(this), // its a foreign call; from router but we need contract address also equal to "_sender"
+            block.timestamp + 60
+        )[1];
 
-        // // calculate the amount of token how much input token should be reimbursed, BNB -> BUSD
-        // uint amountRequired = IUniswapV2Router(sourceRouter).getAmountsIn(amountToken, path2)[0];
+        // fail if we didn't get enough tokens
+        require(amountReceived > amountRequired, 'e13');
 
-        // // swap token and obtain equivalent otherToken amountRequired as a result, BUSD -> BNB
-        // uint amountReceived = IUniswapV2Router(targetRouter).swapExactTokensForTokens(
-        //     amountToken,
-        //     amountRequired, // we already now what we need at least for payback; get less is a fail; slippage can be done via - ((amountRequired * 19) / 981) + 1,
-        //     path1,
-        //     address(this), // its a foreign call; from router but we need contract address also equal to "_sender"
-        //     block.timestamp + 60
-        // )[1];
+        IERC20 otherToken = IERC20(backward);
 
-        // // fail if we didn't get enough tokens
-        // require(amountReceived > amountRequired, 'e13');
-
-        // IERC20 otherToken = IERC20(backward);
-
-        // // callback should send the funds to the pair address back
-        // otherToken.transfer(msg.sender, amountRequired); // send back borrow
-        // // transfer the profit to the contract owner
-        // otherToken.transfer(owner, amountReceived - amountRequired);
+        // callback should send the funds to the pair address back
+        otherToken.transfer(msg.sender, amountRequired); // send back borrow
+        // transfer the profit to the contract owner
+        otherToken.transfer(owner, amountReceived - amountRequired);
+        */
     }
-
-
-    /* 
-    -------------------------------------------
-    CALLBACK (and fallback) FUNCTIONS
-    -------------------------------------------
-    */
 
     // Sushiswap and Arbidex should both use the standard callback function
     // https://arbidex.gitbook.io/arbitrum-exchange/arbidex-classic/token-swap
